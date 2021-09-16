@@ -1,0 +1,263 @@
+---
+title: "R Notebook"
+output: pdf_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+Read data respiratory
+```{r}
+respiratory <- read.csv('Respiratory.csv', stringsAsFactors = FALSE, sep = ',', dec = ',')
+head(respiratory)
+dim(respiratory)
+summary(respiratory)
+respiratory$Age <- as.numeric(respiratory$Age)
+str(respiratory)
+```
+EDA
+```{r}
+
+#filter data to get ages between 0-3
+
+respiratory_age <- respiratory
+
+ggplot(respiratory_age, aes(x=Rate)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.25, fill="lightblue") +
+ scale_fill_brewer(palette="Blues") +
+ labs(title="Distribution of Respiratory Rate between Ages 0 and 3",y="Respiratory Rate") +
+ theme_classic() + theme(legend.position="none")
+
+ggplot(respiratory_age, aes(x=log(Rate))) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.25, fill="lightblue") +
+ scale_fill_brewer(palette="Blues") +
+ labs(title="Distribution of Respiratory Rate between Ages 0 and 3",y="Respiratory Rate") +
+ theme_classic() + theme(legend.position="none")
+
+ggplot(respiratory_age, aes(x = Age, y = Rate)) + geom_point() + geom_smooth(method = "lm")
+ggplot(respiratory_age, aes(x = Age, y = log(Rate))) + geom_point() + geom_smooth(method = "lm")
+```
+
+```{r}
+regresp <- lm(Rate ~ Age, data = respiratory_age)
+summary(regresp)
+
+regresplog <- lm(log(Rate) ~ Age, data = respiratory_age)
+summary(regresplog)
+```
+log transformation on rate
+
+```{r}
+ggplot(respiratory_age,aes(x=Age, y=regresp$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Age",x="Age",y="Residuals")
+
+plot(regresp,which=1,col=c("blue4"))
+plot(regresp,which=2,col=c("blue4"))
+
+ggplot(respiratory_age,aes(x=Age, y=regresplog$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Age",x="Age",y="Residuals")
+
+plot(regresplog,which=1,col=c("blue4"))
+plot(regresplog,which=2,col=c("blue4"))
+```
+
+confidence and prediction
+
+```{r}
+newdata <- data.frame(Age=1)
+pred1 <- predict(regresp,newdata,interval="prediction"); pred1
+
+newdata2 <- data.frame(Age=18)
+pred2 <- predict(regresp,newdata2,interval="prediction"); pred2
+
+newdata3 <- data.frame(Age=29)
+pred3 <- predict(regresp,newdata3,interval="prediction"); pred3
+
+
+
+```
+
+read data elections
+
+```{r}
+elections <- read.csv('Elections.csv', stringsAsFactors = FALSE, sep = ',')
+head(elections)
+dim(elections)
+summary(elections)
+str(elections)
+```
+
+elections
+
+```{r}
+ggplot(elections, aes(y = Buchanan2000, x = Bush2000)) + geom_point() + geom_smooth(method = "lm")
+
+election_new <- elections[elections$County != "Palm Beach",]
+election_new
+
+ggplot(election_new, aes(x=Buchanan2000)) + geom_histogram()
+
+regelections <- lm(Buchanan2000 ~ Bush2000, data = election_new)
+summary(regelections)
+
+ggplot(election_new,aes(x=Bush2000, y=regelections$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Bush2000",x="Bush2000",y="Residuals")
+
+plot(regelections,which=1,col=c("blue4"))
+plot(regelections,which=2,col=c("blue4"))
+
+```
+
+
+election
+
+```{r}
+regelectionslog <- lm(log(Buchanan2000) ~ log(Bush2000) , data = election_new)
+summary(regelectionslog)
+
+ggplot(election_new,aes(x=Bush2000, y=regelectionslog$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals Log vs Bush2000",x="Bush2000",y="Log Residuals")
+
+ggplot(election_new,aes(x=Buchanan2000, y=regelectionslog$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals Log vs Buchanan2000",x="Bush2000",y="Log Residuals")
+
+plot(regelectionslog,which=1,col=c("blue4"))
+plot(regelectionslog,which=2,col=c("blue4"))
+
+```
+
+
+election
+```{r}
+confint(regelectionslog, level = 0.95)
+
+newdata2 <- data.frame(Bush2000=152846)
+pred2 <- exp(predict(regelectionslog,newdata2,interval="prediction")); pred2
+```
+
+
+airbnb
+
+```{r}
+airbnb <- read.delim("Listings_QueenAnne.txt", sep="", dec=".")
+head(airbnb)
+sapply(airbnb, class)
+airbnb$host_is_superhost <- factor(airbnb$host_is_superhost)
+airbnb$host_identity_verified <- factor(airbnb$host_identity_verified)
+str(airbnb)
+
+ggplot(airbnb, aes(x=price)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.25, fill="lightblue") +
+ scale_fill_brewer(palette="Blues") +
+ labs(title="Distribution of Price",y="Price") +
+ theme_classic() + theme(legend.position="none")
+
+ggplot(airbnb, aes(x = accommodates, y = price)) + geom_point() + geom_smooth(method = "lm")
+ggplot(airbnb, aes(x = bathrooms, y = price)) + geom_point() + geom_smooth(method = "lm")
+ggplot(airbnb, aes(x = bedrooms, y = price)) + geom_point() + geom_smooth(method = "lm")
+
+ggplot(airbnb, aes(x = host_identity_verified, y = price)) + geom_boxplot()
+ggplot(airbnb, aes(x = host_is_superhost, y = price)) + geom_boxplot()
+ggplot(airbnb, aes(x = room_type, y = price)) + geom_boxplot()
+
+```
+
+airbnb
+```{r}
+regairbnb <- lm(price ~ room_type + host_identity_verified + host_is_superhost + accommodates + bathrooms + bedrooms , data = airbnb)
+summary(regairbnb)
+
+ggplot(airbnb,aes(x=accommodates, y=regairbnb$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Accomodates",x="Accomodates",y="Residuals")
+
+ggplot(airbnb,aes(x=bathrooms, y=regairbnb$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Bathrooms",x="Bathrooms",y="Residuals")
+
+ggplot(airbnb,aes(x=bedrooms, y=regairbnb$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Bedrooms",x="Bedrooms",y="Residuals")
+
+plot(regairbnb,which=1,col=c("blue4"))
+plot(regairbnb,which=2,col=c("blue4"))
+
+confint(regairbnb,level = 0.95)
+
+plot(regairbnb,which=5,col=c("blue4"))
+
+```
+
+airbnb
+```{r}
+regairbnblog <- lm(log(price) ~ room_type + host_identity_verified + host_is_superhost + accommodates + bathrooms + bedrooms , data = airbnb)
+summary(regairbnblog)
+
+ggplot(airbnb,aes(x=accommodates, y=regairbnblog$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Accomodates",x="Accomodates",y="Residuals")
+
+ggplot(airbnb,aes(x=bathrooms, y=regairbnblog$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Bathrooms",x="Bathrooms",y="Residuals")
+
+ggplot(airbnb,aes(x=bedrooms, y=regairbnblog$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Bedrooms",x="Bedrooms",y="Residuals")
+
+ggplot(regairbnblog, aes(x = host_identity_verified, y=regairbnblog$residual)) + geom_boxplot()
+ggplot(regairbnblog, aes(x = host_is_superhost, y=regairbnblog$residual)) + geom_boxplot()
+ggplot(regairbnblog, aes(x = room_type, y=regairbnblog$residual)) + geom_boxplot()
+
+plot(regairbnblog,which=1,col=c("blue4"))
+plot(regairbnblog,which=2,col=c("blue4"))
+
+confint(regairbnblog,level = 0.95)
+
+plot(regairbnblog,which=5,col=c("blue4"))
+
+```
+
+
+airbnb outliers
+
+```{r}
+airbnbnew <- airbnb[airbnb$id != 5143477 & airbnb$id != 20481127 &airbnb$id != 43603849,]
+
+regairbnblognew <- lm(log(price) ~ room_type + host_identity_verified + host_is_superhost + accommodates + bathrooms + bedrooms , data = airbnbnew)
+summary(regairbnblognew)
+
+ggplot(airbnbnew,aes(x=accommodates, y=regairbnblognew$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Accomodates",x="Accomodates",y="Residuals")
+
+ggplot(airbnbnew,aes(x=bathrooms, y=regairbnblognew$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Bathrooms",x="Bathrooms",y="Residuals")
+
+ggplot(airbnbnew,aes(x=bedrooms, y=regairbnblognew$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs Bedrooms",x="Bedrooms",y="Residuals")
+
+plot(regairbnblognew,which=1,col=c("blue4"))
+plot(regairbnblognew,which=2,col=c("blue4"))
+
+confint(regairbnblognew,level = 0.95)
+
+plot(regairbnblognew,which=5,col=c("blue4"))
+
+```
+
